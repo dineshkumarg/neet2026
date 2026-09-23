@@ -1,0 +1,409 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MQ Round 2 College Order</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f4f6f5; --surface:#ffffff; --ink:#15232b; --muted:#56666e; --line:#d9e0dd;
+  --accent:#17665a; --accent-soft:#e2efeb; --held:#a8671a; --held-soft:#f7ecdc;
+  --good:#2f7d4f; --warn:#b5701c; --bad:#b1403a;
+  --h1:#e3eeea; --h2:#c6ded6; --h3:#9fc9bb; --h4:#6fae9a; --h5:#3f8f79;
+  --serif:"Instrument Serif", Georgia, "Times New Roman", serif;
+  --sans:"Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:12px 64px;display:flex;flex-direction:column;gap:36px}
+h1,h2{font-family:var(--serif);font-weight:400;text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(34px,5.4vw,56px);line-height:1.02}
+h2{font-family:var(--sans);font-size:15px;font-weight:700;line-height:1.3;letter-spacing:0}
+h3{font-size:15px;margin:0;font-weight:600}
+p{margin:0;max-width:68ch}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+header.oneline{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;font-size:13px;padding-bottom:8px;border-bottom:1px solid var(--line);color:var(--muted)}
+header.oneline h1{font-family:var(--sans);font-size:13px;font-weight:700;line-height:1.4;color:var(--ink);letter-spacing:0}
+header.oneline .dl strong{color:var(--held)}
+header.oneline .sep{opacity:.5}
+.chip{font-size:13px;padding:5px 10px;border-radius:999px;background:var(--held-soft);border:1px solid var(--held)}
+.chip strong{color:var(--held)}
+.deadline{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:baseline;padding:14px 16px;border:1px solid var(--held);background:var(--held-soft);border-radius:6px}
+.deadline strong{color:var(--held)}
+section{display:flex;flex-direction:column;gap:16px}
+
+/* Order list */
+.order{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.slot{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.slot .pos{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:600}
+.slot .name{font-family:var(--sans);font-size:15px;font-weight:700;line-height:1.3}
+.slot.skip{border-style:dashed;background:transparent}
+.slot.skip .pos{color:var(--bad)}
+.slot.held{border-color:var(--held);background:var(--held-soft)}
+.slot.held .pos{color:var(--held)}
+.slot p{font-size:14px}
+
+/* Leaderboard */
+.lenses{display:flex;flex-wrap:wrap;gap:8px}
+.lens{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:999px;cursor:pointer}
+.lens[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.lens:focus-visible,.toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.board{display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px}
+.row{display:grid;grid-template-columns:28px minmax(120px,190px) 1fr 52px;gap:12px;align-items:center}
+.row .rk{font-family:var(--mono);color:var(--muted);font-size:13px}
+.row .nm{font-weight:600;font-size:14.5px}
+.row .nm small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.bar{height:12px;background:var(--h1);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .35s ease}
+.row.is-held .bar i{background:var(--held)}
+.row .sc{font-family:var(--mono);font-size:14px;text-align:right;font-weight:600}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+
+/* Matrix */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:900px;font-size:13px}
+th,td{padding:10px 10px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+thead th{position:sticky;top:0;background:var(--surface);font-size:12.5px;font-weight:600;z-index:1}
+thead th.held{color:var(--held)}
+tbody th{font-weight:600;width:210px}
+tbody th .w{display:block;font-family:var(--mono);font-weight:400;font-size:11px;color:var(--muted);margin-top:2px}
+td .s{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-weight:600;font-size:13px;padding:2px 7px;border-radius:3px}
+td .s b{font-weight:400;font-size:10.5px;opacity:.8}
+td .ev{display:block;color:var(--muted);font-size:12px;margin-top:4px;line-height:1.4}
+td.best .s{outline:1.5px solid var(--accent)}
+tfoot td,tfoot th{font-weight:600;background:var(--accent-soft);border-bottom:0}
+.hideev td .ev{display:none}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.toggle{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 12px;border-radius:4px;cursor:pointer}
+
+/* Profiles */
+.profiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.prof{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.prof h3{font-family:var(--sans);font-weight:700;font-size:15px;line-height:1.3}
+.prof dl{display:grid;grid-template-columns:max-content 1fr;gap:4px 12px;margin:0;font-size:13px}
+.prof dt{color:var(--muted)}
+.prof dd{margin:0}
+.pc{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px}
+.pc ul{margin:4px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+.pc .plus{color:var(--good);font-weight:600;font-size:12px}
+.pc .minus{color:var(--bad);font-weight:600;font-size:12px}
+@media (max-width:520px){.pc{grid-template-columns:1fr}.row{grid-template-columns:22px 1fr 44px}.row .bar{grid-column:2/4;grid-row:2}}
+
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px 28px;font-size:14px}
+.notes p{max-width:none}
+ol.src{margin:0;padding-left:20px;font-size:13px;display:flex;flex-direction:column;gap:4px;color:var(--muted)}
+ol.src a{color:var(--accent)}
+.legend{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.legend span.sw{width:18px;height:12px;border-radius:2px;display:inline-block}
+table.pr{min-width:760px}
+table.pr td{font-size:12.5px;line-height:1.45}
+table.pr td b{font-family:var(--mono);font-size:13px}
+table.pr td.gap{color:var(--muted);font-style:italic}
+th.heldname{color:var(--held)}
+.tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.tag.mid{background:var(--accent-soft);color:var(--accent)}
+.tag.low{background:var(--held-soft);color:var(--held)}
+.tag.none{background:#f6e3e1;color:var(--bad)}
+.why{display:flex;flex-direction:column;gap:8px;font-size:14px}
+.why ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:80ch}
+table.fr{min-width:820px}
+table.fr td{font-size:12.5px;line-height:1.45}
+table.fr td b{font-family:var(--mono)}
+table.pr td.new{background:var(--accent-soft)}
+.league{display:flex;flex-direction:column;gap:6px}
+.lg{list-style:none;margin:0;padding:10px 14px;background:var(--surface);border:1px solid var(--line);border-radius:6px;display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:column;grid-template-rows:repeat(13,auto);column-gap:28px;row-gap:2px;font-size:12.5px}
+.lg li{display:grid;grid-template-columns:22px minmax(0,1fr) 90px 50px;gap:8px;align-items:center;padding:2px 4px;border-radius:3px}
+.lg .lr{font-family:var(--mono);color:var(--muted);font-size:11px}
+.lg .lv{font-family:var(--mono);text-align:right;font-weight:600}
+.lg .lb{height:7px;background:var(--h1);border-radius:2px;overflow:hidden}
+.lg .lb i{display:block;height:100%;background:#9fb3ad}
+.lg li.me{background:var(--accent-soft);font-weight:600}
+.lg li.me .lb i{background:var(--accent)}
+.lg li.held{background:var(--held-soft);font-weight:600;color:var(--held)}
+.lg li.held .lb i{background:var(--held)}
+@media (max-width:640px){.lg{grid-template-columns:1fr;grid-auto-flow:row;grid-template-rows:none}}
+</style></head><body>
+
+<div class="wrap">
+
+<header class="oneline">
+  <h1>MQ Round 2: 5 colleges ranked</h1><span class="sep">·</span>
+  <span class="dl">Options close <strong>24 Sep, 2 PM</strong> · a new allotment cancels your Khammam seat</span><span class="sep">·</span>
+  <span>Overall ranking, weighted score /100</span>
+</header>
+
+<section id="ranking" style="margin-top:-24px">
+  <p class="muted">Each parameter is scored 0–10 and weighted, then summed to 100. Switch the lens to see how the ranking changes depending on what you care about most.</p>
+  <div class="lenses" role="group" aria-label="Weighting lens">
+    <button class="lens" id="lens-balanced" data-lens="balanced" aria-pressed="true">Balanced</button>
+    <button class="lens" id="lens-clinical" data-lens="clinical" aria-pressed="false">Clinical &amp; PG first</button>
+    <button class="lens" id="lens-hyd" data-lens="hyd" aria-pressed="false">Hyderabad &amp; brand first</button>
+  </div>
+  <div class="board" id="board" aria-live="polite"></div>
+  <p class="muted" id="lensnote" style="font-size:13.5px"></p>
+</section>
+
+<section id="order">
+  <div class="eyebrow">The answer</div>
+  <h2>Suggested web-options order</h2>
+  <p>On balanced scoring, <strong>Mamata Khammam now leads (75.2), with Kamineni close behind (73.8)</strong>. Khammam leads by more if you weight clinical and PG factors. So moving is mostly about getting to Hyderabad. If Hyderabad matters to you, this is the order I'd use:</p>
+  <div class="order">
+    <div class="slot"><span class="pos">OPTION 1</span><span class="name">Kamineni Academy, LB Nagar</span><p>Best mix of Hyderabad location and quality. 97.3% Final MBBS Part-I pass rate (Nov 2025), the strongest PG demand of the group (MD Gen Med closed at NEET-PG rank 18,272), and DM Cardio, MCh Neuro and MCh Uro on campus.</p></div>
+    <div class="slot"><span class="pos">OPTION 2</span><span class="name">Apollo, Jubilee Hills</span><p>Most sought after by NEET-UG toppers and the best address and brand. But NMC renewed it only conditionally for 2025–26 (11 of 20 departments short of faculty), and PG aspirants rank its departments low. Swap it with Kamineni if brand and an abroad pathway matter most to you.</p></div>
+    <div class="slot"><span class="pos">OPTION 3 · only if Hyderabad is decisive</span><span class="name">Mamata Academy, Bachupally</span><p>Same management as Khammam. Big, busy hospital (1,602 OPD a day) and the best intern stipend (₹22,527). But it only opened in 2019, is still NMC <em>Permitted</em> rather than Recognised, and scores below Khammam on every lens. List it only if being in Hyderabad matters more to you than anything else.</p></div>
+    <div class="slot skip"><span class="pos">DON'T LIST</span><span class="name">SVS, Mahabubnagar</span><p>It scores level with Khammam but has no clear edge: 2023 pass rates of 75–93%, a ₹2,000 intern stipend, and you'd still be ~100 km from Hyderabad. Not worth losing your current seat.</p></div>
+    <div class="slot held"><span class="pos">YOUR CURRENT SEAT</span><span class="name">Mamata, Khammam</span><p>Your fallback. Leave it off the list; you keep it if nothing above gets allotted. Not listing anything at all is also a defensible choice.</p></div>
+  </div>
+</section>
+
+<section id="matrix">
+  <div class="eyebrow">20 parameters</div>
+  <h2>Parameter-by-parameter scorecard</h2>
+  <div class="toolbar">
+    <div class="legend">Score shading:
+      <span class="sw" style="background:var(--h1)"></span>≤4
+      <span class="sw" style="background:var(--h2)"></span>5–6
+      <span class="sw" style="background:var(--h3)"></span>7
+      <span class="sw" style="background:var(--h4)"></span>8
+      <span class="sw" style="background:var(--h5)"></span>9–10 · outlined = best in row · small number = rank among 5
+    </div>
+    <button class="toggle" id="evtoggle" aria-pressed="true">Hide evidence</button>
+  </div>
+  <div class="tablewrap"><table id="tbl"></table></div>
+</section>
+
+<section id="passrates">
+  <div class="eyebrow">Added parameter</div>
+  <h2>MBBS university pass rates, 2021–2025</h2>
+  <p class="muted" style="font-size:14px">Each figure is the share of students who appeared for a KNRUHS exam and passed it, taken from the college's own NMC-mandated disclosure. The <strong>2024–25 batch, 1st-year</strong> column comes from a college-wise KNRUHS list you shared (handwritten copy, not yet checked against the official result). None of the five colleges publishes a complete five-year history, so gaps are shown as gaps rather than filled with estimates. For context, KNRUHS reported <strong>92.25%</strong> passing Final MBBS statewide in March 2023.</p>
+  <div class="tablewrap"><table class="pr">
+    <thead><tr><th>College</th><th>2021</th><th>2022</th><th>2023</th><th>2024</th><th>2025</th><th>1st yr, 2024–25 batch</th><th>Disclosure</th></tr></thead>
+    <tbody>
+      <tr><th>Apollo</th><td><b>99%</b> Final Pt-II (2016 batch)<br><b>80%</b> 1st yr (2019 batch)</td><td class="gap">not published</td><td><b>87%</b> 1st yr (134/170, 2021 batch)<br><b>97%</b> PG MD/MS</td><td class="gap">not published</td><td><b>85%</b> 2nd yr (125/147, May)<br><b>89%</b> Final Pt-I supply (31/35)</td><td class="new"><b>91.3%</b> · #1 of 26</td><td><span class="tag mid">Partial</span></td></tr>
+      <tr><th>Kamineni, LB Nagar</th><td class="gap">not published</td><td class="gap">not published</td><td class="gap">not published</td><td class="gap">not published</td><td><b>97.3%</b> Final Pt-I (146/150, 2022 batch, Nov); 60 first classes</td><td class="new"><b>80.6%</b> · #12 of 26</td><td><span class="tag low">Latest only</span></td></tr>
+      <tr><th>Mamata Academy</th><td colspan="5" class="gap">Nothing else published. The first batch (2019 entry) graduated in 2025, so there's no multi-year record yet.</td><td class="new"><b>84.6%</b> · #6 of 26</td><td><span class="tag low">Latest only</span></td></tr>
+      <tr><th>SVS</th><td class="gap">not published</td><td class="gap">not published</td><td><b>75%</b> 1st yr (140/186)<br><b>76%</b> 2nd yr (104/137)<br><b>76%</b> Final Pt-I (78/102)<br><b>93%</b> Final Pt-II (91/98)<br><b>94%</b> PG MD/MS</td><td class="gap">not published</td><td class="gap">not published</td><td class="new"><b>77.3%</b> · #16 of 26</td><td><span class="tag mid">One full year</span></td></tr>
+      <tr><th class="heldname">Mamata Khammam</th><td class="gap">Result sheet posted only as an image</td><td class="gap">not published</td><td class="gap">not published</td><td class="gap">not published</td><td class="gap">not published</td><td class="new"><b>84.5%</b> · #7 of 26</td><td><span class="tag low">Latest only</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="league">
+    <h3>1st-year pass rate, 2024–25 batch: all 26 private colleges</h3>
+    <p class="muted" style="font-size:13px">Your five colleges are highlighted. The median across the 26 colleges is 79.5% and the mean is 77.9%. The bar scale starts at 50%. SVS and Patnam Mahender Reddy are tied at 77.3%.</p>
+    <ol class="lg"><li class="me"><span class="lr">1</span><span class="ln">Apollo, Hyderabad</span><span class="lb"><i style="width:82.6%"></i></span><span class="lv">91.3%</span></li><li class=""><span class="lr">2</span><span class="ln">Shadan</span><span class="lb"><i style="width:80.0%"></i></span><span class="lv">90%</span></li><li class=""><span class="lr">3</span><span class="ln">Father Colombo</span><span class="lb"><i style="width:77.3%"></i></span><span class="lv">88.66%</span></li><li class=""><span class="lr">4</span><span class="ln">Deccan, Hyderabad</span><span class="lb"><i style="width:73.2%"></i></span><span class="lv">86.6%</span></li><li class=""><span class="lr">5</span><span class="ln">CMR</span><span class="lb"><i style="width:72.0%"></i></span><span class="lv">86%</span></li><li class="me"><span class="lr">6</span><span class="ln">Mamata Academy, Bachupally</span><span class="lb"><i style="width:69.2%"></i></span><span class="lv">84.6%</span></li><li class="held"><span class="lr">7</span><span class="ln">Mamata Khammam</span><span class="lb"><i style="width:69.0%"></i></span><span class="lv">84.5%</span></li><li class=""><span class="lr">8</span><span class="ln">Kamineni, Narketpally</span><span class="lb"><i style="width:68.0%"></i></span><span class="lv">84%</span></li><li class=""><span class="lr">9</span><span class="ln">Arundathi</span><span class="lb"><i style="width:64.0%"></i></span><span class="lv">82%</span></li><li class=""><span class="lr">10</span><span class="ln">Dr VRK Women's</span><span class="lb"><i style="width:64.0%"></i></span><span class="lv">82%</span></li><li class=""><span class="lr">11</span><span class="ln">Bhaskara</span><span class="lb"><i style="width:62.6%"></i></span><span class="lv">81.3%</span></li><li class="me"><span class="lr">12</span><span class="ln">Kamineni, LB Nagar</span><span class="lb"><i style="width:61.2%"></i></span><span class="lv">80.6%</span></li><li class=""><span class="lr">13</span><span class="ln">RVM</span><span class="lb"><i style="width:59.2%"></i></span><span class="lv">79.6%</span></li><li class=""><span class="lr">14</span><span class="ln">MNR</span><span class="lb"><i style="width:58.6%"></i></span><span class="lv">79.3%</span></li><li class=""><span class="lr">15</span><span class="ln">Mahavir</span><span class="lb"><i style="width:57.2%"></i></span><span class="lv">78.6%</span></li><li class="me"><span class="lr">16</span><span class="ln">SVS, Mahabubnagar</span><span class="lb"><i style="width:54.6%"></i></span><span class="lv">77.3%</span></li><li class=""><span class="lr">17</span><span class="ln">Patnam Mahender Reddy</span><span class="lb"><i style="width:54.6%"></i></span><span class="lv">77.3%</span></li><li class=""><span class="lr">18</span><span class="ln">Surabhi</span><span class="lb"><i style="width:53.3%"></i></span><span class="lv">76.66%</span></li><li class=""><span class="lr">19</span><span class="ln">Maheshwara</span><span class="lb"><i style="width:45.2%"></i></span><span class="lv">72.6%</span></li><li class=""><span class="lr">20</span><span class="ln">Ayaan</span><span class="lb"><i style="width:45.0%"></i></span><span class="lv">72.5%</span></li><li class=""><span class="lr">21</span><span class="ln">Nova</span><span class="lb"><i style="width:42.6%"></i></span><span class="lv">71.3%</span></li><li class=""><span class="lr">22</span><span class="ln">Prathima Relief, Warangal</span><span class="lb"><i style="width:38.7%"></i></span><span class="lv">69.33%</span></li><li class=""><span class="lr">23</span><span class="ln">Prathima, Karimnagar</span><span class="lb"><i style="width:36.8%"></i></span><span class="lv">68.4%</span></li><li class=""><span class="lr">24</span><span class="ln">Mediciti</span><span class="lb"><i style="width:30.0%"></i></span><span class="lv">65%</span></li><li class=""><span class="lr">25</span><span class="ln">Chalmeda Anand Rao</span><span class="lb"><i style="width:21.0%"></i></span><span class="lv">60.5%</span></li><li class=""><span class="lr">26</span><span class="ln">TRR</span><span class="lb"><i style="width:12.0%"></i></span><span class="lv">56%</span></li></ol>
+  </div>
+  <div class="why">
+    <h3>Why the numbers look the way they do</h3>
+    <ul>
+      <li><strong>First and second year are the hard filters everywhere.</strong> Under the CBME curriculum (from the 2019 batch), Anatomy, Physiology and Biochemistry, then Pathology, Pharmacology and Microbiology, eliminate the most students. Final Part-II results tend to run 90%+ because weak students have already been held back. That's why SVS shows 75% early and 93% at finals, and Apollo 80–87% in first year but 99% at finals.</li>
+      <li><strong>"Appeared" includes repeaters.</strong> SVS's 186 first-year candidates against a 150-seat intake means about 36 students were retaking the exam, and repeaters pass at lower rates. That pulls SVS's headline percentage down more than a clean single-batch figure would.</li>
+      <li><strong>Intake merit matters.</strong> Cat-A open seats closed at rank 41,663 at Apollo, 70–74k at Kamineni and Mamata Academy, and 1.18 lakh at SVS and 1.56 lakh at Khammam. Management seats close much deeper (Cat-B local closed around 2.9 lakh at SVS and 3.2 lakh at Khammam). A lower-scoring intake usually means more first-year failures unless the college makes up for it with teaching and internals.</li>
+      <li><strong>Intake merit shows most clearly in first year.</strong> Apollo has the strongest intake of the five and tops all 26 colleges at 91.3%. Kamineni LB Nagar is the surprise: its intake is similar to Mamata Academy's, yet its first-year result is lower (80.6%, #12). Its 97.3% in Final Part-I suggests students who fall behind early do catch up by the final years.</li>
+      <li><strong>The two Mamata campuses are level.</strong> Bachupally (84.6%) and Khammam (84.5%) are almost identical, even though Khammam's intake closes about 85,000 ranks deeper. That points to consistent teaching under the same management.</li>
+      <li><strong>SVS is consistently below the median.</strong> At 77.3% this year and about 75% in 2023, its first-year results are below the 26-college median of 79.5%. Its repeater load and deeper intake both push the figure down.</li>
+      <li><strong>Apollo's faculty warning still matters.</strong> The strong first-year result is reassuring, but NMC's 2025 finding that 11 of 20 departments were short of faculty is a risk for later years, which are taught by clinical departments.</li>
+    </ul>
+    <p class="muted" style="font-size:13px">The fastest way to fill the gaps is to ask each college at reporting: "Please share university pass percentages, by year of MBBS, for the last three batches." Colleges have to hold this data for NMC inspections.</p>
+  </div>
+</section>
+
+<section id="forums">
+  <div class="eyebrow">Forum sweep</div>
+  <h2>What forums say</h2>
+  <p class="muted" style="font-size:14px">Searched Reddit, Quora, Collegedunia, Shiksha, Careers360, JustDial, YouTube and news sites on 23 Sep 2026. <strong>Reddit</strong> has no indexed threads on any of these five colleges; Telangana MQ talk mostly happens in WhatsApp and Telegram groups, which aren't searchable. <strong>Quora</strong> and <strong>JustDial</strong> block automated reading, so only their search snippets were usable. Review counts are small (3–31 per college), so treat each line as one student's view.</p>
+  <div class="tablewrap"><table class="fr">
+    <thead><tr><th>College</th><th>Ratings seen</th><th>What students praise</th><th>What students complain about</th></tr></thead>
+    <tbody>
+      <tr><th>Apollo</th><td>Collegedunia <b>3.3/5</b> (12 reviews; social life 2.5)<br>Careers360 <b>4.3/5</b> (3)</td><td>"Professors well trained"; attached hospital gives regular ward exposure; quiet, study-focused campus</td><td>Internals every 2–3 months and "difficult to pass them"; "detain students even for 1% less attendance"; no proper ground; few fests; high hostel fee</td></tr>
+      <tr><th>Kamineni, LB Nagar</th><td>Careers360 <b>3.6/5</b> (4; academics 4.8, campus life 2.5)<br>Shiksha placements 3.75</td><td>"In terms of teaching, the college is by far the best you can get"; exams conducted regularly; AC classrooms, digital boards</td><td>"Very strict"; one fest a year; small main-road campus with no playground; one reviewer: "patient flow is a bit low compared to government colleges"; extra charges</td></tr>
+      <tr><th>Mamata Academy</th><td>Shiksha <b>4.0/5</b> (9)<br>Careers360 / Collegedunia: too few reviews</td><td>"Very well maintained"; good infrastructure and faculty; three internals a year; cultural fests</td><td>Very little independent student feedback yet: the college is new and the reviews are thin and uniformly positive</td></tr>
+      <tr><th>SVS</th><td>Collegedunia (31 reviews): faculty <b>4.3</b>, academics 4.0, hostel 3.7<br>Shiksha: positive</td><td>"Hospital provides us with lot of exposure"; exams well paced; "one of the oldest" private colleges; good library and Wi-Fi</td><td>Repetitive mess food; toilets 250–300 m from some lecture galleries; some lectures handed to junior PGs who "just read the ppts"; hostel rooms shrinking</td></tr>
+      <tr><th class="heldname">Mamata Khammam</th><td>Collegedunia: faculty <b>4.3</b>, academics 4.0, hostel 3.7; one review 3.9/5 overall</td><td>"The best in the private colleges with good faculty and good academics"; large grounds; AC library; "no shortage of faculty"</td><td>"Patient flow is ok, not too high and not too low"; rules "sometimes strict or don't make sense"; average mess food; old hostel rooms; few extracurriculars</td></tr>
+    </tbody>
+  </table></div>
+  <div class="why">
+    <h3>From the news</h3>
+    <ul>
+      <li><strong>Stipend complaints (Apr 2025):</strong> Telangana resident doctors alleged that several private colleges show stipend payments on paper and then take the money back. <em>Mamata Medical College</em> was named. The report doesn't say which campus, but that name is usually used for Khammam. The same report quoted stipend amounts at Apollo (₹10,000) and Kamineni (₹35,000 for residents). These are allegations reported by the media, not NMC findings.</li>
+      <li><strong>Watch the names:</strong> recent ragging stories from "Mahabubnagar Medical College" and "GMC Khammam" are about the <em>government</em> colleges in those towns, not SVS or Mamata. No ragging or NMC-penalty news turned up for any of the five colleges here.</li>
+      <li><strong>Pass rates:</strong> no public forum post gave college-wise pass figures. The 2024–25 first-year list in the pass-rate section came from you.</li>
+    </ul>
+    <p class="muted" style="font-size:13px">Two scores changed after this sweep: Kamineni's hands-on score went from 8 to 7.5 (patient-flow comment), and Khammam's stipend score went from 5 to 4 (stipend allegation).</p>
+  </div>
+</section>
+
+<section id="profiles">
+  <div class="eyebrow">College profiles</div>
+  <h2>Key facts, strengths and concerns</h2>
+  <div class="profiles" id="profgrid"></div>
+</section>
+
+<section id="method">
+  <div class="eyebrow">How this was built</div>
+  <h2>Method and caveats</h2>
+  <div class="notes">
+    <p><strong>Hard data first.</strong> Where a number exists, it drives the score: 2025 KNRUHS closing ranks, NMC seat matrices, college-disclosed bed and OPD counts, university pass rates, and the NMC stipend list. Softer parameters (faculty quality, PG-prep culture, abroad pathway) are judgement calls based on student reviews and NMC remarks, so treat them as ±1.</p>
+    <p><strong>Forums.</strong> See the "What forums say" section. Review sites skew positive and have small samples, so the NMC and KNRUHS records get more weight than any single review.</p>
+    <p><strong>No college runs a formal USMLE programme.</strong> That score is a proxy: hospital brand recognition, international-patient exposure and research output.</p>
+    <p><strong>Fees.</strong> Telangana kept the 2023–26 tuition for the 2026–29 block (G.O.Ms.No.98, 07.08.2026): Apollo and Kamineni ₹13 L/yr, SVS ₹12.5 L, both Mamatas ₹12 L. Hostel, mess and the KNRUHS university fee are extra. Confirm with the college before paying.</p>
+    <p><strong>Discontinuation.</strong> Leaving after the cut-off date triggers the ₹20 lakh bond and a 3-year debarment from Telangana MBBS admission, so settle your choice now, not after joining.</p>
+    <p><strong>Not advice.</strong> This is a structured comparison to support your decision, not a guarantee of allotment or outcomes. Always check the live KNRUHS notification.</p>
+  </div>
+</section>
+
+<section id="sources">
+  <div class="eyebrow">Sources</div>
+  <ol class="src">
+    <li><a href="https://collegeandfees.com/colleges/apollo-institute-of-medical-sciences-and-research-hyderabad" target="_blank" rel="noopener">Apollo IMSR Hyderabad: NMC renewal letter, PG matrix, pass rates, stipend (CollegeAndFees, citing NMC/KNRUHS)</a></li>
+    <li><a href="https://collegeandfees.com/colleges/kamineni-academy-of-medical-sciences-hyderabad" target="_blank" rel="noopener">Kamineni Academy LB Nagar: results, PG/SS matrix, hospital, cutoffs</a></li>
+    <li><a href="https://collegeandfees.com/colleges/mamata-academy-of-medical-sciences-hyderabad" target="_blank" rel="noopener">Mamata Academy Bachupally: NMC status, hospital data, stipend, cutoffs</a></li>
+    <li><a href="https://collegeandfees.com/colleges/svs-medical-college-mahabubnagar" target="_blank" rel="noopener">SVS Mahabubnagar: NMC pro-forma, results 2023, PG 148 seats, hostel, stipend</a></li>
+    <li><a href="https://collegeandfees.com/colleges/mamata-medical-college-khammam" target="_blank" rel="noopener">Mamata Khammam: seat matrix, 2025 CQ/MQ closing ranks, PG courses</a></li>
+    <li><a href="https://www.edufever.com/telangana-medical-college-fee-structure/" target="_blank" rel="noopener">Telangana private MBBS fee table (Edufever)</a></li>
+    <li><a href="https://telanganatoday.com/no-hike-in-private-medical-dental-college-fees-in-telangana" target="_blank" rel="noopener">No hike in private medical fees for 2026–29 (Telangana Today)</a></li>
+    <li><a href="https://www.knruhs.telangana.gov.in/wp-content/uploads/notifications/20260812112823_KNRUHS-MBBS-BDS-ADMISSIONS-UNDER-MANAGEMENT-QUOTA-FOR-THE-AY-2026-27-PROSPECTUS.pdf" target="_blank" rel="noopener">KNRUHS MQ prospectus 2026–27: ₹20 L bond, G.O.Ms.No.98</a></li>
+    <li><a href="https://eduprospect.com/news/telangana-mbbs-bds-2026-phase-2-web-options-open-check-dates-seat-matrix-fees/" target="_blank" rel="noopener">Phase 2 MQ web options 22–24 Sep; earlier seat cancelled on new allotment (EduProspect)</a></li>
+    <li><a href="https://mbbscouncil.com/listing/telangana-medical-colleges-ranking-mq/" target="_blank" rel="noopener">Telangana MQ preference ranking (MBBSCouncil)</a></li>
+    <li><a href="https://www.shiksha.com/college/kamineni-academy-of-medical-sciences-and-research-centre-l-b-nagar-hyderabad-65615/reviews" target="_blank" rel="noopener">Kamineni LB Nagar student reviews (Shiksha)</a></li>
+    <li><a href="https://collegedunia.com/college/10928-svs-medical-college-mahabubnagar/reviews" target="_blank" rel="noopener">SVS student reviews (Collegedunia)</a></li>
+    <li><a href="https://collegedunia.com/college/10711-mamata-medical-college-khammam/reviews" target="_blank" rel="noopener">Mamata Khammam student reviews (Collegedunia)</a></li>
+    <li><a href="https://www.shiksha.com/college/svs-medical-college-mahbubnagar-telangana-other-65639/reviews" target="_blank" rel="noopener">SVS student reviews (Shiksha)</a></li>
+    <li><a href="https://www.careers360.com/colleges/apollo-institute-of-medical-sciences-and-research-hyderabad/reviews" target="_blank" rel="noopener">Apollo student reviews (Careers360)</a></li>
+    <li><a href="https://mdmsenquiry.com/kamineni-academy-of-medical-sciences-hyderabad/" target="_blank" rel="noopener">Kamineni teaching hospital OPD (MDMS Enquiry)</a></li>
+      <li><a href="https://apolloimsr.edu.in/about-aimsr/awards-and-achievements/" target="_blank" rel="noopener">Apollo 2021 university results and medals (college site)</a></li>
+    <li><a href="https://telanganatoday.com/knruhs-announces-mbbs-final-year-results" target="_blank" rel="noopener">KNRUHS Final MBBS statewide pass rate 92.25%, Mar 2023 (Telangana Today)</a></li>
+    <li><a href="http://www.kamsrc.com/academics_Results.htm" target="_blank" rel="noopener">Kamineni LB Nagar results page</a></li>
+    <li><a href="https://svsmch.com/results-of-all-the-examinations-of-last-one-year/" target="_blank" rel="noopener">SVS results of all examinations (2023)</a></li>
+    <li><a href="https://mamatamedicalcollege.com/results/" target="_blank" rel="noopener">Mamata Khammam results page</a></li>
+      <li><a href="https://collegedunia.com/college/59440-apollo-institute-of-medical-science-and-research-aimsr-hyderabad/reviews" target="_blank" rel="noopener">Apollo reviews (Collegedunia)</a></li>
+    <li><a href="https://www.careers360.com/colleges/kamineni-academy-of-medical-sciences-and-research-centre-hyderabad/reviews" target="_blank" rel="noopener">Kamineni LB Nagar reviews (Careers360)</a></li>
+    <li><a href="https://www.shiksha.com/college/mamata-academy-of-medical-sciences-bachupally-bachupally-hyderabad-70169/reviews" target="_blank" rel="noopener">Mamata Academy reviews (Shiksha)</a></li>
+    <li><a href="https://collegedunia.com/reviews/166577-student-review-on-mamata-medical-college-khammam" target="_blank" rel="noopener">Mamata Khammam student review (Collegedunia)</a></li>
+    <li><a href="https://medicaldialogues.in/news/education/medical-colleges/unpaid-stipend-illicit-means-to-show-amount-transactions-telangana-medicos-allege-stipend-discrepancies-146859" target="_blank" rel="noopener">Telangana stipend allegations, Apr 2025 (Medical Dialogues)</a></li>
+    <li><a href="https://medicaldialogues.in/news/education/medical-colleges/10-mbbs-students-of-mahabubnagar-medical-college-suspended-for-ragging-juniors-138181" target="_blank" rel="noopener">Ragging case at the government college in Mahabubnagar, not SVS (Medical Dialogues)</a></li>
+  </ol>
+</section>
+
+</div>
+
+<script>
+const COLS=[
+ {id:"apollo",name:"Apollo",sub:"Jubilee Hills, Hyd"},
+ {id:"kam",name:"Kamineni",sub:"LB Nagar, Hyd"},
+ {id:"mams",name:"Mamata Academy",sub:"Bachupally, Hyd"},
+ {id:"svs",name:"SVS",sub:"Mahabubnagar"},
+ {id:"kmm",name:"Mamata Khammam",sub:"Your current seat",held:true}
+];
+// [name, group, weights {balanced, clinical, hyd}, scores[5], evidence[5]]
+const P=[
+ ["Establishment & track record","Institution",{b:4,c:6,h:3},[7,7,4,9,9],
+  ["Est. 2012 (Apollo group, 1983)","First batch 2013; hospital since 1991","Est. 2019; first batch graduated 2025","Est. 1999; 25+ batches","Est. 1998; 28 batches, NAAC A"]],
+ ["NMC recognition status","Institution",{b:6,c:5,h:4},[4,8,5,9,9],
+  ["100 seats recognised, 50 still permitted; 2025–26 renewal conditional (11/20 depts faculty-deficient)","Full batches every year since 2013; no adverse NMC notes found","Still 'Permitted' on annual renewals, not yet Recognised","Recognised; clean NMC history","Long recognised"]],
+ ["Demand from toppers (2025 Cat-A OC closing rank)","Institution",{b:6,c:3,h:9},[10,8,8,6,5],
+  ["41,663: most sought after","73,606","70,137","1,17,606","1,55,707 (mop-up)"]],
+ ["Teaching hospital beds","Clinical",{b:4,c:5,h:3},[7,7.5,8,8,9],
+  ["685 per NMC data (older docs say 470)","700 (NMC) / 795 in clinical-load tab","750, itemised unit-wise","780 incl. 30 emergency","800–1,300 (claims vary)"]],
+ ["Patient load (OPD / occupancy)","Clinical",{b:8,c:11,h:6},[7,7,8,9,8],
+  ["~1,000–1,650 OPD/day; >85% occupancy","~33–35k OPD/month (~1,100/day); 81% occupancy","1,602 OPD/day; 85% occupancy (2025)","~1,860 OPD/day (Jul 2024); referral hub for 3 states' border areas","High OPD/IPD from rural catchment; one review says 'ok, not too high'"]],
+ ["Hands-on exposure for MBBS students","Clinical",{b:9,c:12,h:6},[6,7.5,7,9,9],
+  ["Corporate tertiary hospital: many paying/insured patients, so UGs get less hands-on time","General + trauma load on the NH corridor; one Careers360 reviewer: patient flow 'a bit low compared to government colleges'","Charitable-style general hospital, still ramping up","District referral centre; students report high exposure","Strong surgical hands-on reported"]],
+ ["Case variety & super-specialities","Clinical",{b:5,c:5,h:5},[9,8,6,6,8],
+  ["Paediatric cardiac, transplant, lap surgery (no DM/MCh seats)","DM Cardio, MCh Neuro, MCh Uro","No DM/MCh","No DM/MCh","DM/MCh (Cardio, Neuro, Uro)"]],
+ ["In-house PG (MD/MS) seats","PG",{b:5,c:7,h:4},[7,7,7,10,9],
+  ["95 across 19 courses","94 + 6 super-speciality","98 across 14 courses","148 across 16 courses (largest)","~130 + super-speciality"]],
+ ["How PG aspirants rate its depts (MD Gen Med closing rank, NEET-PG 2025)","PG",{b:5,c:7,h:4},[4,10,8,6,6],
+  ["1,48,301: weak demand","18,272: strongest","33,594","83,585 (Radiology 9,412)","Not available (scored neutral)"]],
+ ["MBBS pass-rate record, 2021–2025 (see pass-rate section)","Academics",{b:6,c:7,h:5},[9,8,7,5.5,7],
+  ["Latest 1st yr 91.3%, #1 of 26 private colleges; earlier 80–99%","Latest 1st yr 80.6% (#12 of 26) but Final Pt-I 97.3% (Nov 2025)","Latest 1st yr 84.6% (#6 of 26); no earlier record","Latest 1st yr 77.3% (#16 of 26); 2023 early years ~75–76%, Final Pt-II 93%","Latest 1st yr 84.5% (#7 of 26); no other figures published"]],
+ ["Faculty strength & stability","Academics",{b:7,c:8,h:6},[4,8.5,6,7.5,8],
+  ["NMC flagged faculty shortfall in 11 of 20 depts","246-member roster; students call teaching 'the best you can get'","Three different deans across NMC/KNRUHS/college records","250+ full-time; some lectures handed to PGs","Senior, stable faculty per reviews"]],
+ ["NEET-PG preparation culture","Academics",{b:5,c:7,h:4},[6,8,6,6,8],
+  ["Disciplined, but intense workload","Strict attendance and regular exams","Too new to judge","'Everyone uses Marrow/PrepLadder anyway'","DAMS coaching on campus"]],
+ ["USMLE / abroad pathway (proxy)","Career",{b:3,c:2,h:6},[8,6,5,4,4],
+  ["Apollo brand, international patients, research: best proxy","City tertiary exposure","City location","Rural/district","District"]],
+ ["Research output","Career",{b:3,c:2,h:3},[8,6,4,6,7],
+  ["Central Research Lab (2016), 170+ papers, ICMR/DST grants","Moderate","Early stage","DHR/CDSCO-registered ethics committees","Central Research Lab + advisory committee"]],
+ ["Alumni network","Career",{b:5,c:3,h:5},[7,7,3,8,9],
+  ["~10 batches; Apollo network","~9 batches","1 batch","25+ batches","28 batches, 200/yr now"]],
+ ["Campus & academic infrastructure","Campus",{b:4,c:2,h:4},[8,6,8,8,8],
+  ["2 lakh sq ft block inside Apollo Health City; 10 acres","10.9 acres on main road; 'lacks sports & ground'","37 acres, new build","28 acres, 800-seat auditorium","40 acres, AC lecture halls"]],
+ ["Hostel & residential life","Campus",{b:4,c:2,h:4},[7,6,8,7,8],
+  ["453 beds, triple sharing","75+75 rooms; capacity not published","AC twin rooms photographed","1,194 beds; mess monotony & shrinking rooms reported","AC/non-AC, single/double/triple options"]],
+ ["Location & city life","Campus",{b:5,c:2,h:15},[9.5,8.5,7,5,4],
+  ["Jubilee Hills, prime Hyderabad","LB Nagar; metro-connected, busy road","Bachupally, NW outskirts","~100 km from Hyderabad","~200 km from Hyderabad"]],
+ ["Intern stipend (NMC stipend list)","Money",{b:3,c:2,h:2},[5,3,9,2,4],
+  ["₹5,000/month","~₹2,083 reported (Mar 2026)","₹22,527/month (state rate ₹50,686)","₹2,000/month","Not published; named in an Apr 2025 media report alleging stipends are credited then withdrawn"]],
+ ["Tuition cost (Cat-B, 2026–27)","Money",{b:3,c:2,h:2},[6,6,8,7,8],
+  ["₹13 L/yr (≈₹58.5 L over 4.5 yrs)","₹13 L/yr (≈₹58.5 L)","₹12 L/yr (≈₹54 L)","₹12.5 L/yr (≈₹56.3 L)","₹12 L/yr (≈₹54 L)"]]
+];
+const LENS_NOTE={
+ b:"Balanced: clinical exposure and faculty carry the most weight, with location counting about as much as alumni or results.",
+ c:"Clinical & PG first: extra weight on patient load, hands-on work, PG seats and department reputation. Location barely counts.",
+ h:"Hyderabad & brand first: location is weighted 3× and toppers' preference counts more. Kamineni and Apollo overtake Khammam here; Mamata Academy still does not."
+};
+let lens="b";
+function totals(k){
+  const W=P.reduce((a,p)=>a+p[2][k],0);
+  return COLS.map((c,i)=>P.reduce((a,p)=>a+p[2][k]*p[3][i],0)/W*10);
+}
+function renderBoard(){
+  const t=totals(lens);
+  const order=COLS.map((c,i)=>({c,s:t[i]})).sort((a,b)=>b.s-a.s);
+  const board=document.getElementById("board");
+  board.innerHTML=order.map((o,i)=>`<div class="row${o.c.held?" is-held":""}"><span class="rk">#${i+1}</span><span class="nm">${o.c.name}<small>${o.c.sub}</small></span><div class="bar"><i style="width:${o.s}%"></i></div><span class="sc">${o.s.toFixed(1)}</span></div>`).join("");
+  document.getElementById("lensnote").textContent=LENS_NOTE[lens];
+  renderTable();
+}
+function shade(s){return s>=9?"var(--h5)":s>=8?"var(--h4)":s>=7?"var(--h3)":s>=5?"var(--h2)":"var(--h1)";}
+function ink(s){return s>=8?"#fff":"var(--ink)";}
+function renderTable(){
+  const t=totals(lens);
+  let h=`<thead><tr><th>Parameter <span class="muted" style="font-weight:400">(weight)</span></th>${COLS.map(c=>`<th class="${c.held?"held":""}">${c.name}<br><span class="muted" style="font-weight:400">${c.sub}</span></th>`).join("")}</tr></thead><tbody>`;
+  P.forEach(p=>{
+    const sc=p[3];
+    const sorted=[...sc].sort((a,b)=>b-a);
+    const mx=sorted[0];
+    h+=`<tr><th>${p[0]}<span class="w">${p[1]} · weight ${p[2][lens]}</span></th>`;
+    sc.forEach((s,i)=>{
+      const rk=sorted.indexOf(s)+1;
+      h+=`<td class="${s===mx?"best":""}"><span class="s" style="background:${shade(s)};color:${ink(s)}">${s}<b>#${rk}</b></span><span class="ev">${p[4][i]}</span></td>`;
+    });
+    h+=`</tr>`;
+  });
+  h+=`</tbody><tfoot><tr><th>Weighted total /100</th>${t.map(v=>`<td class="mono">${v.toFixed(1)}</td>`).join("")}</tr></tfoot>`;
+  document.getElementById("tbl").innerHTML=h;
+}
+document.querySelectorAll(".lens").forEach(b=>b.addEventListener("click",()=>{
+  lens={balanced:"b",clinical:"c",hyd:"h"}[b.dataset.lens];
+  document.querySelectorAll(".lens").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));
+  renderBoard();
+}));
+const evb=document.getElementById("evtoggle");
+evb.addEventListener("click",()=>{
+  const tw=document.querySelector(".tablewrap");
+  const hidden=tw.classList.toggle("hideev");
+  evb.textContent=hidden?"Show evidence":"Hide evidence";
+  evb.setAttribute("aria-pressed",hidden?"false":"true");
+});
+const PROF=[
+ {n:"Apollo Institute of Medical Sciences & Research",f:[["Est.","2012 · Apollo Hospitals group"],["MBBS seats","150 (Cat-B 52: 44 local + 8 open)"],["Hospital","685 beds · Apollo Health City"],["PG","95 MD/MS · no DM/MCh"],["Cat-B fee","₹13 L/yr"]],
+  p:["Top choice of toppers (Cat-A OC closed at 41,663)","Best 1st-yr pass rate of all 26 private colleges (91.3%)","Best address, brand and abroad signalling","Research lab, ICMR/DST projects"],
+  m:["NMC conditional renewal 2024-25 & 2025-26","Corporate patient mix limits UG hands-on","Low PG demand for its depts"]},
+ {n:"Kamineni Academy of Medical Sciences, LB Nagar",f:[["Est.","2012 (first batch 2013) · Kamineni Hospitals since 1991"],["MBBS seats","150 (Cat-B 52)"],["Hospital","700 beds · ~1,100 OPD/day"],["PG","94 MD/MS + 6 DM/MCh"],["Cat-B fee","₹13 L/yr"]],
+  p:["97.3% Final MBBS Part-I pass rate","Strongest PG department demand","Strict, study-focused culture"],
+  m:["1st-yr pass only 80.6% (#12 of 26)","Small main-road campus, no real ground","Very low reported intern stipend","Strictness some students dislike"]},
+ {n:"Mamata Academy of Medical Sciences, Bachupally",f:[["Est.","2019 · Mamata Educational Society"],["MBBS seats","150 (Cat-B 52)"],["Hospital","750 beds · 1,602 OPD/day"],["PG","98 MD/MS · no DM/MCh"],["Cat-B fee","₹12 L/yr"]],
+  p:["Best intern stipend (₹22,527)","Busy new hospital, modern 37-acre campus","Cheapest Hyderabad option"],
+  m:["Still NMC 'Permitted', not Recognised","No alumni track record yet","Leadership records inconsistent"]},
+ {n:"SVS Medical College, Mahabubnagar",f:[["Est.","1999 · Sri Venkata Sai Educational Society"],["MBBS seats","150 (Cat-B 52)"],["Hospital","780 beds · ~1,860 OPD/day"],["PG","148 MD/MS (largest) · no DM/MCh"],["Cat-B fee","₹12.5 L/yr"]],
+  p:["Highest patient flow of the five","Most in-house PG seats","Large residential campus (1,194 hostel beds)"],
+  m:["1st-yr pass 77.3% (#16 of 26), below median","₹2,000 intern stipend","~100 km from Hyderabad"]},
+ {n:"Mamata Medical College, Khammam (current seat)",f:[["Est.","1998 · NAAC A"],["MBBS seats","200 (Cat-B 70: 59 local + 11 open)"],["Hospital","800–1,300 beds (claims vary)"],["PG","~130 MD/MS + DM/MCh"],["Cat-B fee","₹12 L/yr"]],
+  p:["Most established; 28 batches of alumni","Strong surgical hands-on and PG culture (DAMS on campus)","#1 on the balanced and clinical & PG lenses; 1st-yr pass 84.5% (#7 of 26)"],
+  m:["~200 km from Hyderabad","Lowest Cat-A demand of the five","Stipend and bed data not published"]}
+];
+document.getElementById("profgrid").innerHTML=PROF.map(x=>`<article class="prof"><h3>${x.n}</h3><dl>${x.f.map(f=>`<dt>${f[0]}</dt><dd>${f[1]}</dd>`).join("")}</dl><div class="pc"><div><span class="plus">STRENGTHS</span><ul>${x.p.map(i=>`<li>${i}</li>`).join("")}</ul></div><div><span class="minus">CONCERNS</span><ul>${x.m.map(i=>`<li>${i}</li>`).join("")}</ul></div></div></article>`).join("");
+renderBoard();
+</script>
+</body></html>
